@@ -18,11 +18,6 @@ class ProblemController extends Controller
         $this->middleware('auth'); // Require login
     }
 
-    /**
-     * Display a listing of problems based on user role.
-     *
-     * @return \Illuminate\View\View
-     */
     public function index()
     {
         /** @var \App\Models\User $user */
@@ -104,6 +99,7 @@ class ProblemController extends Controller
 
         $specialists = User::where('role', 'specialist')
             ->whereHas('expertise', function ($query) use ($allTypes) {
+                // Explicitly reference the table name to avoid ambiguity
                 $query->whereIn('specialist_expertise.problem_type_id', $allTypes);
             })->get();
 
