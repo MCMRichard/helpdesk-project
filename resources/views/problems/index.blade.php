@@ -27,6 +27,7 @@
                     <td>{{ $problem->caller->name }}</td>
                     <td>{{ $problem->problemType->name }}</td>
                     <td>{{ $problem->status }}</td>
+                    <td>{{ $problem->equipment->status }}</td>
                     <td>
                         @if (Auth::user()->role !== 'specialist')
                             <form action="{{ route('problems.assign', $problem->problem_number) }}" method="POST">

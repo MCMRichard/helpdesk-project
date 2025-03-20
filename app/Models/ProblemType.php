@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class ProblemType extends Model
 {
+    use HasFactory;
+
     protected $primaryKey = 'problem_type_id';
     protected $fillable = ['name', 'parent_type_id'];
 

@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Equipment extends Model
 {
+    use HasFactory;
+
     protected $primaryKey = 'serial_number'; // String PK
     public $incrementing = false; // Not auto-incrementing
     protected $keyType = 'string'; // Key is a string

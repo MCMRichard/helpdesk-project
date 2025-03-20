@@ -16,7 +16,7 @@ class ProblemTest extends TestCase
 
     public function test_operator_can_log_problem()
     {
-        /** @var \App\Models\User $operator */
+        /** @var \App\Models\User|\Illuminate\Contracts\Auth\Authenticatable $operator */
         $operator = User::factory()->create(['role' => 'operator']);
         $caller = Caller::factory()->create();
         $problemType = ProblemType::factory()->create();
@@ -40,7 +40,7 @@ class ProblemTest extends TestCase
 
     public function test_specialist_can_resolve_problem()
     {
-        /** @var \App\Models\User $specialist */
+        /** @var \App\Models\User|\Illuminate\Contracts\Auth\Authenticatable $specialist */
         $specialist = User::factory()->create(['role' => 'specialist']);
         $problem = Problem::factory()->create([
             'specialist_id' => $specialist->id,
@@ -48,6 +48,7 @@ class ProblemTest extends TestCase
         ]);
 
         $this->actingAs($specialist);
+
         $response = $this->post(route('problems.resolve', $problem->problem_number), [
             'resolution_notes' => 'Fixed the issue',
         ]);
@@ -57,5 +58,17 @@ class ProblemTest extends TestCase
             'problem_number' => $problem->problem_number,
             'status' => 'resolved',
         ]);
+    }
+
+    public function test_equipment_status_is_set()
+    {
+        $equipment = Equipment::factory()->create(['status' => 'under_repair']);
+        $this->assertEquals('under_repair', $equipment->status);
+    }
+
+    public function test_caller_factory_works()
+    {
+        $caller = Caller::factory()->create();
+        $this->assertInstanceOf(Caller::class, $caller);
     }
 }
