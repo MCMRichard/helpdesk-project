@@ -2,13 +2,20 @@
 
 @section('content')
     @if (session('success'))
-        <div class="alert alert-success">{{ session('success') }}</div>
-    @endif
-    @if (session('error'))
-        <div class="alert alert-danger">{{ session('error') }}</div>
+        <div class="alert alert-success">
+            {{ session('success') }}
+        </div>
     @endif
 
-    <h1>{{ Auth::user()->role === 'specialist' ? 'My Assigned Problems' : 'Open Problems' }}</h1>
+    @if (session('error'))
+        <div class="alert alert-danger">
+            {{ session('error') }}
+        </div>
+    @endif
+
+    <h1>
+        {{ Auth::user()->role === 'specialist' ? 'My Assigned Problems' : 'Open Problems' }}
+    </h1>
 
     <table class="table">
         <thead>
@@ -17,6 +24,8 @@
                 <th>Caller</th>
                 <th>Type</th>
                 <th>Status</th>
+                <th>Equipment Status</th>
+                <th>Notes</th>
                 <th>Actions</th>
             </tr>
         </thead>
@@ -28,6 +37,7 @@
                     <td>{{ $problem->problemType->name }}</td>
                     <td>{{ $problem->status }}</td>
                     <td>{{ $problem->equipment->status }}</td>
+                    <td>{{ $problem->notes }}</td>
                     <td>
                         @if (Auth::user()->role !== 'specialist')
                             <form action="{{ route('problems.assign', $problem->problem_number) }}" method="POST">
@@ -35,6 +45,7 @@
                                 <button type="submit" class="btn btn-primary">Assign Specialist</button>
                             </form>
                         @endif
+
                         @if ($problem->specialist_id == Auth::id() || Auth::user()->isAdmin())
                             <form action="{{ route('problems.resolve', $problem->problem_number) }}" method="POST">
                                 @csrf
@@ -47,5 +58,6 @@
             @endforeach
         </tbody>
     </table>
+
     <a href="{{ route('problems.create') }}" class="btn btn-success">Log New Problem</a>
 @endsection
