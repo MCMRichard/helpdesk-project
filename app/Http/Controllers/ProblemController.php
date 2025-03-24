@@ -71,7 +71,18 @@ class ProblemController extends Controller
         if ($specialist) {
             return redirect()->back()->with('success', "Specialist assigned: {$specialist->name}");
         }
-        return redirect()->back()->with('error', 'No specialist available');
+        $specialists = User::where('role', 'specialist')
+            ->whereHas('expertise', function ($query) use ($problem) {
+                $allTypes = array_merge([$problem->problem_type_id], $this->getAncestorProblemTypes($problem->problem_type_id));
+                $query->whereIn('specialist_expertise.problem_type_id', $allTypes);
+            })
+            ->withCount('activeAssignments')
+            ->get();
+
+        if ($specialists->isEmpty()) {
+            return redirect()->back()->with('error', 'No specialist with matching expertise available');
+        }
+        return redirect()->back()->with('error', 'All specialists are at maximum workload');
     }
 
     public function resolve(Request $request, $problemId)
@@ -92,6 +103,11 @@ class ProblemController extends Controller
         return redirect()->route('problems.index')->with('success', 'Problem resolved successfully');
     }
 
+    public function activeAssignments()
+    {
+        return $this->hasMany(Problem::class, 'specialist_id')->where('status', '!=', 'resolved');
+    }
+
     private function assignSpecialistToProblem(Problem $problem)
     {
         $ancestors = $this->getAncestorProblemTypes($problem->problem_type_id);
@@ -99,16 +115,17 @@ class ProblemController extends Controller
 
         $specialists = User::where('role', 'specialist')
             ->whereHas('expertise', function ($query) use ($allTypes) {
-                // Explicitly reference the table name to avoid ambiguity
                 $query->whereIn('specialist_expertise.problem_type_id', $allTypes);
-            })->get();
+            })
+            ->withCount('activeAssignments')
+            ->get();
 
         if ($specialists->isEmpty()) {
             return null;
         }
 
-        $leastLoaded = $specialists->sortBy('workload')->first();
-        if ($leastLoaded->workload >= 10) { // Example max workload
+        $leastLoaded = $specialists->sortBy('active_assignments_count')->first();
+        if ($leastLoaded->active_assignments_count >= 10) { // Max 10 active problems
             return null;
         }
 

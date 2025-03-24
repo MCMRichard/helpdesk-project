@@ -69,4 +69,9 @@ class User extends Authenticatable
     {
         return $this->assignedProblems()->where('status', '!=', 'resolved')->count();
     }
+
+    public function activeAssignments()
+    {
+        return $this->hasMany(Problem::class, 'specialist_id')->where('status', '!=', 'resolved');
+    }
 }
