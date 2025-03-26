@@ -5,8 +5,9 @@ use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 
+// Redirect to login or dashboard
 Route::get('/', function () {
-    return view('welcome');
+    return Auth::check() ? redirect()->route('dashboard') : redirect()->route('login');
 });
 
 Auth::routes();
@@ -22,6 +23,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/problems', [ProblemController::class, 'store'])->name('problems.store');
     Route::post('/problems/{problem}/assign', [ProblemController::class, 'assignSpecialist'])->name('problems.assign');
     Route::post('/problems/{problem}/resolve', [ProblemController::class, 'resolve'])->name('problems.resolve');
+    Route::get('/problems/resolved', [ProblemController::class, 'resolved'])->name('problems.resolved');
 });
 
 // Admin-only routes
@@ -29,4 +31,5 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::get('/admin/users', [UserController::class, 'index'])->name('admin.users');
     Route::post('/admin/users/{user}/role', [UserController::class, 'updateRole'])->name('admin.users.updateRole');
     Route::post('/admin/users/{user}/expertise', [UserController::class, 'updateExpertise'])->name('admin.users.updateExpertise');
+    Route::get('/admin/problems', [ProblemController::class, 'adminIndex'])->name('admin.problems');
 });

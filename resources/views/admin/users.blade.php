@@ -38,7 +38,7 @@
                                 </select>
                                 @error('problem_type_ids')
                                     <span class="invalid-feedback d-block" role="alert">
-                                        <strong>{{ $message }}</strong>
+                                        <strong>{{ $message ?? 'Invalid input' }}</strong>
                                     </span>
                                 @enderror
                                 <button type="submit" class="btn btn-primary mt-2">Update Specialties</button>

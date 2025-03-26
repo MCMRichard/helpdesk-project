@@ -113,6 +113,33 @@ class ProblemController extends Controller
         return $this->hasMany(Problem::class, 'specialist_id')->where('status', '!=', 'resolved');
     }
 
+    public function adminIndex(Request $request)
+    {
+        $query = Problem::with(['caller', 'problemType', 'specialist', 'operator']);
+        if ($request->has('status')) {
+            $query->where('status', $request->status);
+        }
+        if ($request->has('search')) {
+            $query->where(function ($q) use ($request) {
+                $q->where('notes', 'like', '%' . $request->search . '%')
+                ->orWhereHas('caller', function ($q) use ($request) {
+                    $q->where('name', 'like', '%' . $request->search . '%');
+                });
+            });
+        }
+        $problems = $query->orderBy('reported_time', 'desc')->get();
+        return view('admin.problems', compact('problems'));
+    }
+
+    public function resolved()
+    {
+        $problems = Problem::with(['caller', 'problemType', 'specialist'])
+            ->where('status', 'resolved')
+            ->orderBy('resolved_time', 'desc')
+            ->get();
+        return view('problems.resolved', compact('problems'));
+    }
+
     private function assignSpecialistToProblem(Problem $problem)
     {
         $ancestors = $this->getAncestorProblemTypes($problem->problem_type_id);

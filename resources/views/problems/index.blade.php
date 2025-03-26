@@ -61,4 +61,5 @@
     </table>
 
     <a href="{{ route('problems.create') }}" class="btn btn-success">Log New Problem</a>
+    <a href="{{ route('problems.resolved') }}" class="btn btn-info">View Resolved Problems</a>
 @endsection
