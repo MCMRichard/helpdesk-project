@@ -28,18 +28,25 @@ class RegisterController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
-            'role' => ['required', 'string', 'in:specialist,operator,admin'], // Add role validation
+            'role' => ['required', 'string', 'in:specialist,operator,admin'],
+            'problem_type_ids' => ['nullable', 'array', 'required_if:role,specialist'],
+            'problem_type_ids.*' => ['exists:problem_types,problem_type_id'],
         ]);
     }
-
-    // Create a new user with additional role field
+    
     protected function create(array $data)
     {
-        return User::create([
+        $user = User::create([
             'name' => $data['name'],
             'email' => $data['email'],
             'password' => Hash::make($data['password']),
-            'role' => $data['role'], // Add role field
+            'role' => $data['role'],
         ]);
+    
+        if ($data['role'] === 'specialist' && !empty($data['problem_type_ids'])) {
+            $user->expertise()->attach($data['problem_type_ids']);
+        }
+    
+        return $user;
     }
 }

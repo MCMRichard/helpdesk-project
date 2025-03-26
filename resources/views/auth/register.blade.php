@@ -63,10 +63,32 @@
                             <label for="role" class="col-md-4 col-form-label text-md-end">{{ __('Role') }}</label>
                             <div class="col-md-6">
                                 <select name="role" id="role" class="form-control" required>
-                                    <option value="specialist">Specialist</option>
-                                    <option value="operator">Operator</option>
-                                    <option value="admin">Admin</option>
+                                    <option value="operator" {{ old('role') === 'operator' ? 'selected' : '' }}>Operator</option>
+                                    <option value="specialist" {{ old('role') === 'specialist' ? 'selected' : '' }}>Specialist</option>
+                                    <option value="admin" {{ old('role') === 'admin' ? 'selected' : '' }}>Admin</option>
                                 </select>
+                                @error('role')
+                                    <span class="invalid-feedback" role="alert">
+                                        <strong>{{ $message }}</strong>
+                                    </span>
+                                @enderror
+                            </div>
+                        </div>
+
+                        <!-- Specialties Dropdown -->
+                        <div class="row mb-3" id="specialties" style="display: none;">
+                            <label for="problem_type_ids" class="col-md-4 col-form-label text-md-end">{{ __('Specialties') }}</label>
+                            <div class="col-md-6">
+                                <select name="problem_type_ids[]" id="problem_type_ids" class="form-control" multiple>
+                                    @foreach (\App\Models\ProblemType::all() as $type)
+                                        <option value="{{ $type->problem_type_id }}">{{ $type->name }}</option>
+                                    @endforeach
+                                </select>
+                                @error('problem_type_ids')
+                                    <span class="invalid-feedback" role="alert">
+                                        <strong>{{ $message }}</strong>
+                                    </span>
+                                @enderror
                             </div>
                         </div>
 

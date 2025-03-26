@@ -24,6 +24,7 @@
                 <th>Caller</th>
                 <th>Type</th>
                 <th>Status</th>
+                <th>Specialist</th>
                 <th>Equipment Status</th>
                 <th>Notes</th>
                 <th>Actions</th>
@@ -36,7 +37,8 @@
                     <td>{{ $problem->caller->name }}</td>
                     <td>{{ $problem->problemType->name }}</td>
                     <td>{{ $problem->status }}</td>
-                    <td>{{ $problem->equipment->status }}</td>
+                    <td>{{ $problem->specialist ? $problem->specialist->name : 'No specialist assigned' }}</td>
+                    <td>{{ $problem->equipment ? $problem->equipment->status : 'N/A' }}</td>
                     <td>{{ $problem->notes }}</td>
                     <td>
                         @if (Auth::user()->role !== 'specialist')
@@ -45,7 +47,6 @@
                                 <button type="submit" class="btn btn-primary">Assign Specialist</button>
                             </form>
                         @endif
-
                         @if ($problem->specialist_id == Auth::id() || Auth::user()->isAdmin())
                             <form action="{{ route('problems.resolve', $problem->problem_number) }}" method="POST">
                                 @csrf

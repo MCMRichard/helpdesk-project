@@ -23,9 +23,14 @@ class ProblemController extends Controller
         /** @var \App\Models\User $user */
         $user = Auth::user();
         if ($user->isSpecialist()) {
-            $problems = Problem::where('specialist_id', $user->id)->where('status', '!=', 'resolved')->get();
+            $problems = Problem::with('specialist')
+                ->where('specialist_id', $user->id)
+                ->where('status', '!=', 'resolved')
+                ->get();
         } else {
-            $problems = Problem::where('status', 'open')->get();
+            $problems = Problem::with('specialist')
+                ->where('status', 'open')
+                ->get();
         }
         return view('problems.index', compact('problems'));
     }
