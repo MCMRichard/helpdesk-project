@@ -24,6 +24,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/problems/{problem}/assign', [ProblemController::class, 'assignSpecialist'])->name('problems.assign');
     Route::post('/problems/{problem}/resolve', [ProblemController::class, 'resolve'])->name('problems.resolve');
     Route::get('/problems/resolved', [ProblemController::class, 'resolved'])->name('problems.resolved');
+    Route::post('/problems/{problem}/unassign', [ProblemController::class, 'unassignSpecialist'])->name('problems.unassign');
 });
 
 // Admin-only routes

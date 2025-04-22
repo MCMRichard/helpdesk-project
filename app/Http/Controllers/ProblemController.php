@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Caller;
 use App\Models\Equipment;
 use App\Models\Problem;
+use App\Models\ProblemAssignmentHistory;
 use App\Models\ProblemType;
 use App\Models\Software;
 use App\Models\User;
@@ -144,28 +145,75 @@ class ProblemController extends Controller
     {
         $ancestors = $this->getAncestorProblemTypes($problem->problem_type_id);
         $allTypes = array_merge([$problem->problem_type_id], $ancestors);
-
+    
         $specialists = User::where('role', 'specialist')
             ->whereHas('expertise', function ($query) use ($allTypes) {
                 $query->whereIn('specialist_expertise.problem_type_id', $allTypes);
             })
+            ->whereDoesntHave('assignmentHistory', function ($query) use ($problem) {
+                $query->where('problem_id', $problem->problem_number)
+                      ->whereNotNull('unassigned_at');
+            })
             ->withCount('activeAssignments')
             ->get();
-
+    
         if ($specialists->isEmpty()) {
             return null;
         }
-
+    
         $leastLoaded = $specialists->sortBy('active_assignments_count')->first();
         if ($leastLoaded->active_assignments_count >= 10) { // Max 10 active problems
             return null;
         }
-
+    
         $problem->specialist_id = $leastLoaded->id;
         $problem->status = 'assigned';
         $problem->save();
-
+    
+        // Record the assignment in history
+        ProblemAssignmentHistory::create([
+            'problem_id' => $problem->problem_number,
+            'specialist_id' => $leastLoaded->id,
+            'assigned_at' => now(),
+        ]);
+    
         return $leastLoaded;
+    }
+
+    public function unassignSpecialist(Request $request, $problemId)
+    {
+        $problem = Problem::findOrFail($problemId);
+        $user = Auth::user();
+        
+         /** @var \App\Models\User $user */
+         $user = Auth::user();
+        if ($user->id !== $problem->specialist_id && !$user->isAdmin()) {
+            abort(403, 'Unauthorized');
+        }
+    
+        $request->validate([
+            'unassign_reason' => 'required|string',
+        ]);
+    
+        // Find the current assignment record
+        $assignment = ProblemAssignmentHistory::where('problem_id', $problem->problem_number)
+            ->where('specialist_id', $problem->specialist_id)
+            ->whereNull('unassigned_at')
+            ->latest('assigned_at')
+            ->first();
+    
+        if ($assignment) {
+            $assignment->unassigned_at = now();
+            $assignment->reason = $request->unassign_reason;
+            $assignment->save();
+        }
+    
+        $problem->specialist_id = null;
+        $problem->status = 'open';
+        $problem->notes .= "\nUnassigned by {$user->name}: " . $request->unassign_reason;
+        $problem->save();
+    
+        return redirect()->route('problems.index')->with('success', 'Problem returned to operator');
     }
 
     private function getAncestorProblemTypes($problemTypeId)

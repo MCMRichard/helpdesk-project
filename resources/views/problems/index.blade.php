@@ -63,10 +63,17 @@
                                                 </form>
                                             @endif
                                             @if ($problem->specialist_id == Auth::id() || Auth::user()->isAdmin())
+                                                <!-- Resolve Form -->
                                                 <form action="{{ route('problems.resolve', $problem->problem_number) }}" method="POST">
                                                     @csrf
                                                     <textarea name="resolution_notes" class="form-control mb-2" placeholder="Resolution notes" rows="2" required></textarea>
                                                     <button type="submit" class="btn btn-success btn-sm w-100">Resolve</button>
+                                                </form>
+                                                <!-- Unassign Form -->
+                                                <form action="{{ route('problems.unassign', $problem->problem_number) }}" method="POST">
+                                                    @csrf
+                                                    <textarea name="unassign_reason" class="form-control mb-2" placeholder="Reason for unassigning" rows="2" required></textarea>
+                                                    <button type="submit" class="btn btn-warning btn-sm w-100">Unassign Specialist</button>
                                                 </form>
                                             @endif
                                         </div>

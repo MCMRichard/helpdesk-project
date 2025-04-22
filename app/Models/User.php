@@ -14,7 +14,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
-        'role', // Add 'role' to support operator/specialist/admin
+        'role',
     ];
 
     protected $hidden = [
@@ -73,5 +73,10 @@ class User extends Authenticatable
     public function activeAssignments()
     {
         return $this->hasMany(Problem::class, 'specialist_id')->where('status', '!=', 'resolved');
+    }
+
+    public function assignmentHistory()
+    {
+        return $this->hasMany(ProblemAssignmentHistory::class, 'specialist_id');
     }
 }
