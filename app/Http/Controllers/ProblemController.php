@@ -135,7 +135,7 @@ class ProblemController extends Controller
     public function resolved()
     {
         $problems = Problem::with(['caller', 'problemType', 'specialist'])
-            ->where('status', 'resolved')
+            ->whereIn('status', ['resolved', 'unsolvable'])
             ->orderBy('resolved_time', 'desc')
             ->get();
         return view('problems.resolved', compact('problems'));
@@ -216,6 +216,29 @@ class ProblemController extends Controller
         return redirect()->route('problems.index')->with('success', 'Problem returned to operator');
     }
 
+    public function markUnsolvable(Request $request, $problemId)
+    {
+        $problem = Problem::findOrFail($problemId);
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+    
+        // Allow admins, operators, or assigned specialists
+        if (!$user->isAdmin() && !$user->isOperator() && $user->id !== $problem->specialist_id) {
+            abort(403, 'Unauthorized');
+        }
+    
+        $request->validate([
+            'unsolvable_reason' => 'required|string',
+        ]);
+    
+        $problem->status = 'unsolvable';
+        $problem->unsolvable_reason = $request->unsolvable_reason;
+        $problem->notes .= "\nMarked unsolvable by {$user->name}: " . $request->unsolvable_reason;
+        $problem->save();
+    
+        return redirect()->route('problems.index')->with('success', 'Problem marked as unsolvable');
+    }
+
     private function getAncestorProblemTypes($problemTypeId)
     {
         $ancestors = [];
@@ -227,5 +250,57 @@ class ProblemController extends Controller
         }
 
         return $ancestors;
+    }
+
+    public function edit($problemId)
+    {
+        $problem = Problem::findOrFail($problemId);
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+    
+        // Restrict to admins or operators
+        if (!$user->isAdmin() && !$user->isOperator()) {
+            abort(403, 'Unauthorized');
+        }
+    
+        $callers = Caller::all();
+        $problemTypes = ProblemType::all();
+        $equipment = Equipment::all();
+        $software = Software::all();
+    
+        return view('problems.edit', compact('problem', 'callers', 'problemTypes', 'equipment', 'software'));
+    }
+    
+    public function update(Request $request, $problemId)
+    {
+        $problem = Problem::findOrFail($problemId);
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+    
+        // Restrict to admins or operators
+        if (!$user->isAdmin() && !$user->isOperator()) {
+            abort(403, 'Unauthorized');
+        }
+    
+        $request->validate([
+            'caller_id' => 'required|exists:callers,caller_id',
+            'problem_type_id' => 'required|exists:problem_types,problem_type_id',
+            'equipment_serial' => 'nullable|exists:equipment,serial_number',
+            'software_id' => 'nullable|exists:software,software_id',
+            'notes' => 'nullable|string',
+        ]);
+    
+        $problem->update([
+            'caller_id' => $request->caller_id,
+            'problem_type_id' => $request->problem_type_id,
+            'equipment_serial' => $request->equipment_serial,
+            'software_id' => $request->software_id,
+            'notes' => $request->notes,
+        ]);
+    
+        $problem->notes .= "\nEdited by {$user->name} on " . now()->format('Y-m-d H:i');
+        $problem->save();
+    
+        return redirect()->route('problems.index')->with('success', 'Problem updated successfully');
     }
 }

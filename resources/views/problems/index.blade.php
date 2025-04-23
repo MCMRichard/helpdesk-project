@@ -62,7 +62,7 @@
                                                     <button type="submit" class="btn btn-primary btn-sm w-100">Assign Specialist</button>
                                                 </form>
                                             @endif
-                                            @if ($problem->specialist_id == Auth::id() || Auth::user()->isAdmin())
+                                            @if ($problem->specialist_id && (Auth::user()->isAdmin() || Auth::id() === $problem->specialist_id))
                                                 <!-- Resolve Form -->
                                                 <form action="{{ route('problems.resolve', $problem->problem_number) }}" method="POST">
                                                     @csrf
@@ -75,6 +75,18 @@
                                                     <textarea name="unassign_reason" class="form-control mb-2" placeholder="Reason for unassigning" rows="2" required></textarea>
                                                     <button type="submit" class="btn btn-warning btn-sm w-100">Unassign Specialist</button>
                                                 </form>
+                                            @endif
+                                            @if (Auth::user()->isAdmin() || Auth::user()->isOperator() || Auth::id() === $problem->specialist_id)
+                                                <!-- Mark Unsolvable Form -->
+                                                <form action="{{ route('problems.unsolvable', $problem->problem_number) }}" method="POST">
+                                                    @csrf
+                                                    <textarea name="unsolvable_reason" class="form-control mb-2" placeholder="Reason for marking unsolvable (e.g., requires replacement)" rows="2" required></textarea>
+                                                    <button type="submit" class="btn btn-danger btn-sm w-100">Mark Unsolvable</button>
+                                                </form>
+                                            @endif
+                                            @if (Auth::user()->isAdmin() || Auth::user()->isOperator())
+                                                <!-- Edit Button -->
+                                                <a href="{{ route('problems.edit', $problem->problem_number) }}" class="btn btn-info btn-sm w-100">Edit</a>
                                             @endif
                                         </div>
                                     </td>

@@ -28,7 +28,12 @@
                                     <td data-label="Type">{{ $problem->problemType->name }}</td>
                                     <td data-label="Specialist">{{ $problem->specialist ? $problem->specialist->name : 'N/A' }}</td>
                                     <td data-label="Resolved Time">{{ $problem->resolved_time->format('Y-m-d H:i') }}</td>
-                                    <td data-label="Resolution Notes">{{ $problem->notes }}</td>
+                                    <td data-label="Resolution Notes">
+                                        {{ $problem->notes }}
+                                        @if($problem->status === 'unsolvable')
+                                            <br><strong>Unsolvable Reason:</strong> {{ $problem->unsolvable_reason }}
+                                        @endif
+                                    </td>                                    
                                 </tr>
                             @empty
                                 <tr>

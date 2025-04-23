@@ -72,13 +72,21 @@
                                             @case('resolved')
                                                 <span class="badge bg-success">{{ ucfirst($problem->status) }}</span>
                                                 @break
+                                            @case('unsolvable')
+                                                <span class="badge bg-dark">{{ ucfirst($problem->status) }}</span>
+                                                @break
                                             @default
                                                 <span class="badge bg-secondary">{{ ucfirst($problem->status) }}</span>
                                         @endswitch
                                     </td>
                                     <td data-label="Specialist">{{ $problem->specialist ? $problem->specialist->name : 'Unassigned' }}</td>
                                     <td data-label="Reported Time">{{ $problem->reported_time->format('Y-m-d H:i') }}</td>
-                                    <td data-label="Notes">{{ $problem->notes }}</td>
+                                    <td data-label="Notes">
+                                        {{ $problem->notes }}
+                                        @if($problem->unsolvable_reason)
+                                            <br><strong>Unsolvable Reason:</strong> {{ $problem->unsolvable_reason }}
+                                        @endif
+                                    </td>                                    
                                 </tr>
                             @empty
                                 <tr>

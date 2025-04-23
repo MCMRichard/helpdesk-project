@@ -21,6 +21,15 @@ class Problem extends Model
         'resolved_time' => 'datetime',
     ];
 
+    /**
+     * Valid problem statuses
+     * - open: Problem reported but not yet assigned
+     * - assigned: Assigned to a specialist
+     * - resolved: Problem has been resolved
+     * - unsolvable: Problem marked as unresolvable (e.g., needs replacement)
+     */
+    public const STATUSES = ['open', 'assigned', 'resolved', 'unsolvable'];
+
     // Relationship: Caller who reported the problem
     public function caller()
     {

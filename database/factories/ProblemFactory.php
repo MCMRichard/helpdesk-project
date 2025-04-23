@@ -25,9 +25,10 @@ class ProblemFactory extends Factory
             'equipment_serial' => function () {
                 return \App\Models\Equipment::factory()->create()->serial_number;
             },
-            'status' => 'open',
+            'status' => $this->faker->randomElement(['open', 'assigned', 'resolved', 'unsolvable']),
             'reported_time' => now(),
             'notes' => $this->faker->sentence,
+            'unsolvable_reason' => fn($attributes) => $attributes['status'] === 'unsolvable' ? $this->faker->sentence : null,
             'created_at' => now(),
             'updated_at' => now(),
         ];
