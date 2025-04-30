@@ -102,10 +102,26 @@ class ProblemController extends Controller
         $request->validate([
             'resolution_notes' => 'required|string',
         ]);
+    
+        // Update assignment history
+        $assignment = ProblemAssignmentHistory::where('problem_id', $problem->problem_number)
+            ->where('specialist_id', $problem->specialist_id)
+            ->whereNull('unassigned_at')
+            ->latest('assigned_at')
+            ->first();
+    
+        if ($assignment) {
+            $assignment->unassigned_at = now();
+            $assignment->reason = "Problem resolved: {$request->resolution_notes}";
+            $assignment->save();
+        }
+    
         $problem->status = 'resolved';
         $problem->resolved_time = now();
         $problem->notes .= "\nResolution: " . $request->resolution_notes;
+        $problem->specialist_id = null; // Clear specialist_id
         $problem->save();
+    
         return redirect()->route('problems.index')->with('success', 'Problem resolved successfully');
     }
 
@@ -231,9 +247,23 @@ class ProblemController extends Controller
             'unsolvable_reason' => 'required|string',
         ]);
     
+        // Update assignment history
+        $assignment = ProblemAssignmentHistory::where('problem_id', $problem->problem_number)
+            ->where('specialist_id', $problem->specialist_id)
+            ->whereNull('unassigned_at')
+            ->latest('assigned_at')
+            ->first();
+    
+        if ($assignment) {
+            $assignment->unassigned_at = now();
+            $assignment->reason = "Marked unsolvable: {$request->unsolvable_reason}";
+            $assignment->save();
+        }
+    
         $problem->status = 'unsolvable';
         $problem->unsolvable_reason = $request->unsolvable_reason;
         $problem->notes .= "\nMarked unsolvable by {$user->name}: " . $request->unsolvable_reason;
+        $problem->specialist_id = null; // Clear specialist_id
         $problem->save();
     
         return redirect()->route('problems.index')->with('success', 'Problem marked as unsolvable');

@@ -56,33 +56,38 @@
                         </thead>
                         <tbody>
                             @forelse ($users as $user)
-                                <tr>
-                                    <td data-label="Name">{{ $user->name }}</td>
-                                    <td data-label="Email">{{ $user->email }}</td>
-                                    <td data-label="Role">{{ ucfirst($user->role) }}</td>
-                                    <td data-label="Status">
-                                        @if ($user->status == 'active')
-                                            <span class="badge bg-success">Active</span>
-                                        @elseif ($user->status == 'inactive')
-                                            <span class="badge bg-danger">Inactive</span>
-                                        @else
-                                            <span class="badge bg-secondary">{{ ucfirst($user->status) }}</span>
-                                        @endif
-                                    </td>
-                                    <td data-label="Actions">
-                                        <a href="{{ route('users.edit', $user->id) }}" class="btn btn-sm btn-warning">Edit</a>
-                                        <form action="{{ route('users.destroy', $user->id) }}" method="POST" class="d-inline">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?')">Delete</button>
-                                        </form>
-                                    </td>
-                                </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="5" class="text-center text-muted">No users found.</td>
-                                </tr>
-                            @endforelse
+                            <tr>
+                                <td data-label="Name">{{ $user->name }}</td>
+                                <td data-label="Email">{{ $user->email }}</td>
+                                <td data-label="Role">
+                                    {{ ucfirst($user->role) }}
+                                    @if ($user->role === 'specialist')
+                                        (Workload: {{ $user->workload }})
+                                    @endif
+                                </td>
+                                <td data-label="Status">
+                                    @if ($user->status == 'active')
+                                        <span class="badge bg-success">Active</span>
+                                    @elseif ($user->status == 'inactive')
+                                        <span class="badge bg-danger">Inactive</span>
+                                    @else
+                                        <span class="badge bg-secondary">{{ ucfirst($user->status) }}</span>
+                                    @endif
+                                </td>
+                                <td data-label="Actions">
+                                    <a href="{{ route('users.edit', $user->id) }}" class="btn btn-sm btn-warning">Edit</a>
+                                    <form action="{{ route('users.destroy', $user->id) }}" method="POST" class="d-inline">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?')">Delete</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="5" class="text-center text-muted">No users found.</td>
+                            </tr>
+                        @endforelse                        
                         </tbody>
                     </table>
                 </div>

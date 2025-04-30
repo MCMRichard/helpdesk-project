@@ -67,12 +67,13 @@ class User extends Authenticatable
     // Dynamic attribute: Current workload (count of assigned, unresolved problems)
     public function getWorkloadAttribute()
     {
-        return $this->assignedProblems()->where('status', '!=', 'resolved')->count();
+        return $this->assignedProblems()->whereIn('status', ['open', 'assigned'])->count();
     }
 
     public function activeAssignments()
     {
-        return $this->hasMany(Problem::class, 'specialist_id')->where('status', '!=', 'resolved');
+        return $this->hasMany(Problem::class, 'specialist_id')
+                    ->whereIn('status', ['open', 'assigned']);
     }
 
     public function assignmentHistory()

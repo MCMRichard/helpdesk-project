@@ -51,7 +51,12 @@
                                     <td data-label="Caller">{{ $problem->caller->name }}</td>
                                     <td data-label="Type">{{ $problem->problemType->name }}</td>
                                     <td data-label="Status">{{ $problem->status }}</td>
-                                    <td data-label="Specialist">{{ $problem->specialist ? $problem->specialist->name : 'No specialist assigned' }}</td>
+                                    <td data-label="Specialist">
+                                        {{ $problem->specialist ? $problem->specialist->name : 'No specialist assigned' }}
+                                        @if ($problem->specialist)
+                                            (Workload: {{ $problem->specialist->workload }})
+                                        @endif
+                                    </td>
                                     <td data-label="Equipment Status">{{ $problem->equipment ? $problem->equipment->status : 'N/A' }}</td>
                                     <td data-label="Notes">{{ $problem->notes }}</td>
                                     <td data-label="Actions">
@@ -73,7 +78,7 @@
                                                 <form action="{{ route('problems.unassign', $problem->problem_number) }}" method="POST">
                                                     @csrf
                                                     <textarea name="unassign_reason" class="form-control mb-2" placeholder="Reason for unassigning" rows="2" required></textarea>
-                                                    <button type="submit" class="btn btn-warning btn-sm w-100">Unassign Specialist</button>
+                                                    <button type="submit" class="btn btn-warning btn-sm w-100">Unassign</button>
                                                 </form>
                                             @endif
                                             @if (Auth::user()->isAdmin() || Auth::user()->isOperator() || Auth::id() === $problem->specialist_id)
