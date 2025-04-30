@@ -33,6 +33,43 @@ class ProblemController extends Controller
                 ->where('status', 'open')
                 ->get();
         }
+    
+        // Process notes for each problem
+        $problems = $problems->map(function ($problem) {
+            $notes = $problem->notes ?? '';
+            $parsedNotes = [
+                'initial' => '',
+                'resolution' => [],
+                'unassignments' => [],
+                'unsolvable' => [],
+                'edits' => [],
+            ];
+    
+            // Split notes by newlines
+            $lines = explode("\n", $notes);
+            $initialNotes = [];
+            foreach ($lines as $line) {
+                $line = trim($line);
+                if (empty($line)) {
+                    continue;
+                }
+                if (str_starts_with($line, 'Resolution: ')) {
+                    $parsedNotes['resolution'][] = substr($line, strlen('Resolution: '));
+                } elseif (preg_match('/^Unassigned by .+: (.+)$/', $line, $matches)) {
+                    $parsedNotes['unassignments'][] = $matches[1];
+                } elseif (preg_match('/^Marked unsolvable by .+: (.+)$/', $line, $matches)) {
+                    $parsedNotes['unsolvable'][] = $matches[1];
+                } elseif (preg_match('/^Edited by .+ on .+$/', $line)) {
+                    $parsedNotes['edits'][] = $line;
+                } else {
+                    $initialNotes[] = $line;
+                }
+            }
+            $parsedNotes['initial'] = implode(' ', $initialNotes);
+            $problem->parsedNotes = $parsedNotes;
+            return $problem;
+        });
+    
         return view('problems.index', compact('problems'));
     }
 
@@ -133,27 +170,131 @@ class ProblemController extends Controller
     public function adminIndex(Request $request)
     {
         $query = Problem::with(['caller', 'problemType', 'specialist', 'operator']);
-        if ($request->has('status')) {
+    
+        // Apply status filter only if a valid status is selected
+        if ($request->has('status') && $request->status && in_array($request->status, ['open', 'assigned', 'resolved', 'unsolvable'])) {
             $query->where('status', $request->status);
         }
-        if ($request->has('search')) {
-            $query->where(function ($q) use ($request) {
-                $q->where('notes', 'like', '%' . $request->search . '%')
-                ->orWhereHas('caller', function ($q) use ($request) {
-                    $q->where('name', 'like', '%' . $request->search . '%');
-                });
+    
+        // Apply search filter
+        if ($request->has('search') && $request->search !== '') {
+            $searchTerm = trim($request->search);
+            $query->where(function ($q) use ($searchTerm) {
+                $q->where('notes', 'like', '%' . $searchTerm . '%')
+                  ->orWhere('problem_number', 'like', '%' . $searchTerm . '%')
+                  ->orWhereHas('caller', function ($q) use ($searchTerm) {
+                      $q->where('name', 'like', '%' . $searchTerm . '%');
+                  })
+                  ->orWhereHas('problemType', function ($q) use ($searchTerm) {
+                      $q->where('name', 'like', '%' . $searchTerm . '%');
+                  });
             });
         }
+    
         $problems = $query->orderBy('reported_time', 'desc')->get();
+    
+        // Process notes for each problem
+        $problems = $problems->map(function ($problem) {
+            $notes = $problem->notes ?? '';
+            $parsedNotes = [
+                'initial' => '',
+                'resolution' => [],
+                'unassignments' => [],
+                'unsolvable' => [],
+                'edits' => [],
+            ];
+    
+            // Split notes by newlines
+            $lines = explode("\n", $notes);
+            $initialNotes = [];
+            foreach ($lines as $line) {
+                $line = trim($line);
+                if (empty($line)) {
+                    continue;
+                }
+                if (str_starts_with($line, 'Resolution: ')) {
+                    $parsedNotes['resolution'][] = substr($line, strlen('Resolution: '));
+                } elseif (preg_match('/^Unassigned by .+: (.+)$/', $line, $matches)) {
+                    $parsedNotes['unassignments'][] = $matches[1];
+                } elseif (preg_match('/^Marked unsolvable by .+: (.+)$/', $line, $matches)) {
+                    $parsedNotes['unsolvable'][] = $matches[1];
+                } elseif (preg_match('/^Edited by .+ on .+$/', $line)) {
+                    $parsedNotes['edits'][] = $line;
+                } else {
+                    $initialNotes[] = $line;
+                }
+            }
+            $parsedNotes['initial'] = implode(' ', $initialNotes);
+            $problem->parsedNotes = $parsedNotes;
+            return $problem;
+        });
+    
         return view('admin.problems', compact('problems'));
     }
 
-    public function resolved()
+    public function resolved(Request $request)
     {
-        $problems = Problem::with(['caller', 'problemType', 'specialist'])
-            ->whereIn('status', ['resolved', 'unsolvable'])
-            ->orderBy('resolved_time', 'desc')
-            ->get();
+        $query = Problem::with(['caller', 'problemType', 'specialist'])
+            ->whereIn('status', ['resolved', 'unsolvable']);
+        
+        // Apply search filter
+    if ($request->has('search') && $request->search !== '') {
+        $searchTerm = trim($request->search);
+        $query->where(function ($q) use ($searchTerm) {
+            $q->where('notes', 'like', '%' . $searchTerm . '%')
+            ->orWhere('problem_number', 'like', '%' . $searchTerm . '%')
+            ->orWhereHas('caller', function ($q) use ($searchTerm) {
+                $q->where('name', 'like', '%' . $searchTerm . '%');
+            })
+            ->orWhereHas('problemType', function ($q) use ($searchTerm) {
+                $q->where('name', 'like', '%' . $searchTerm . '%');
+            });
+        });
+    }
+    
+        // Apply status filter
+        if ($request->has('status') && $request->status) {
+            $query->where('status', $request->status);
+        }
+    
+        $problems = $query->orderBy('resolved_time', 'desc')->get();
+    
+        // Process notes for each problem
+        $problems = $problems->map(function ($problem) {
+            $notes = $problem->notes ?? '';
+            $parsedNotes = [
+                'initial' => '',
+                'resolution' => [],
+                'unassignments' => [],
+                'unsolvable' => [],
+                'edits' => [],
+            ];
+    
+            // Split notes by newlines
+            $lines = explode("\n", $notes);
+            $initialNotes = [];
+            foreach ($lines as $line) {
+                $line = trim($line);
+                if (empty($line)) {
+                    continue;
+                }
+                if (str_starts_with($line, 'Resolution: ')) {
+                    $parsedNotes['resolution'][] = substr($line, strlen('Resolution: '));
+                } elseif (preg_match('/^Unassigned by .+: (.+)$/', $line, $matches)) {
+                    $parsedNotes['unassignments'][] = $matches[1];
+                } elseif (preg_match('/^Marked unsolvable by .+: (.+)$/', $line, $matches)) {
+                    $parsedNotes['unsolvable'][] = $matches[1];
+                } elseif (preg_match('/^Edited by .+ on .+$/', $line)) {
+                    $parsedNotes['edits'][] = $line;
+                } else {
+                    $initialNotes[] = $line;
+                }
+            }
+            $parsedNotes['initial'] = implode(' ', $initialNotes);
+            $problem->parsedNotes = $parsedNotes;
+            return $problem;
+        });
+    
         return view('problems.resolved', compact('problems'));
     }
 
@@ -263,7 +404,8 @@ class ProblemController extends Controller
         $problem->status = 'unsolvable';
         $problem->unsolvable_reason = $request->unsolvable_reason;
         $problem->notes .= "\nMarked unsolvable by {$user->name}: " . $request->unsolvable_reason;
-        $problem->specialist_id = null; // Clear specialist_id
+        $problem->specialist_id = null;
+        $problem->resolved_time = now(); // Set resolved_time
         $problem->save();
     
         return redirect()->route('problems.index')->with('success', 'Problem marked as unsolvable');

@@ -50,7 +50,7 @@
                                 <th>Name</th>
                                 <th>Email</th>
                                 <th>Role</th>
-                                <th>Status</th> <!-- Include if users have a status -->
+                                <th>Status</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
@@ -66,12 +66,10 @@
                                     @endif
                                 </td>
                                 <td data-label="Status">
-                                    @if ($user->status == 'active')
-                                        <span class="badge bg-success">Active</span>
-                                    @elseif ($user->status == 'inactive')
-                                        <span class="badge bg-danger">Inactive</span>
+                                    @if ($user->is_online)
+                                        <span class="badge bg-success">Online</span>
                                     @else
-                                        <span class="badge bg-secondary">{{ ucfirst($user->status) }}</span>
+                                        <span class="badge bg-secondary">Offline</span>
                                     @endif
                                 </td>
                                 <td data-label="Actions">

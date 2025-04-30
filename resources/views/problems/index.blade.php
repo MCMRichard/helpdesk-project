@@ -58,7 +58,61 @@
                                         @endif
                                     </td>
                                     <td data-label="Equipment Status">{{ $problem->equipment ? $problem->equipment->status : 'N/A' }}</td>
-                                    <td data-label="Notes">{{ $problem->notes }}</td>
+                                    <td data-label="Notes">
+                                        @if ($problem->parsedNotes['initial'] || $problem->parsedNotes['resolution'] || $problem->parsedNotes['unassignments'] || $problem->parsedNotes['unsolvable'] || $problem->parsedNotes['edits'])
+                                            <div class="accordion" id="notesAccordion{{ $problem->problem_number }}">
+                                                <div class="accordion-item">
+                                                    <h2 class="accordion-header" id="notesHeading{{ $problem->problem_number }}">
+                                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#notesCollapse{{ $problem->problem_number }}" aria-expanded="false" aria-controls="notesCollapse{{ $problem->problem_number }}">
+                                                            View Notes
+                                                        </button>
+                                                    </h2>
+                                                    <div id="notesCollapse{{ $problem->problem_number }}" class="accordion-collapse collapse" aria-labelledby="notesHeading{{ $problem->problem_number }}" data-bs-parent="#notesAccordion{{ $problem->problem_number }}">
+                                                        <div class="accordion-body">
+                                                            @if ($problem->parsedNotes['initial'])
+                                                                <h6>Initial Notes</h6>
+                                                                <p>{{ $problem->parsedNotes['initial'] }}</p>
+                                                            @endif
+                                                            @if ($problem->parsedNotes['resolution'])
+                                                                <h6>Resolution</h6>
+                                                                <ul>
+                                                                    @foreach ($problem->parsedNotes['resolution'] as $resolution)
+                                                                        <li>{{ $resolution }}</li>
+                                                                    @endforeach
+                                                                </ul>
+                                                            @endif
+                                                            @if ($problem->parsedNotes['unassignments'])
+                                                                <h6>Unassignment Reasons</h6>
+                                                                <ul>
+                                                                    @foreach ($problem->parsedNotes['unassignments'] as $reason)
+                                                                        <li>{{ $reason }}</li>
+                                                                    @endforeach
+                                                                </ul>
+                                                            @endif
+                                                            @if ($problem->parsedNotes['unsolvable'])
+                                                                <h6>Unsolvable Reasons</h6>
+                                                                <ul>
+                                                                    @foreach ($problem->parsedNotes['unsolvable'] as $reason)
+                                                                        <li>{{ $reason }}</li>
+                                                                    @endforeach
+                                                                </ul>
+                                                            @endif
+                                                            @if ($problem->parsedNotes['edits'])
+                                                                <h6>Edit History</h6>
+                                                                <ul>
+                                                                    @foreach ($problem->parsedNotes['edits'] as $edit)
+                                                                        <li>{{ $edit }}</li>
+                                                                    @endforeach
+                                                                </ul>
+                                                            @endif
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        @else
+                                            <span class="text-muted">No notes</span>
+                                        @endif
+                                    </td>
                                     <td data-label="Actions">
                                         <div class="d-flex flex-column gap-2">
                                             @if (Auth::user()->role !== 'specialist')

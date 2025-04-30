@@ -25,7 +25,7 @@
                 <form method="GET" class="mb-4">
                     <div class="row g-3">
                         <div class="col-md-4">
-                            <input type="text" name="search" class="form-control" placeholder="Search by caller or notes" value="{{ request('search') }}">
+                            <input type="text" name="search" class="form-control" placeholder="Search by problem #, caller, notes, or problem type" value="{{ request('search') }}">
                         </div>
                         <div class="col-md-4">
                             <select name="status" class="form-select">
@@ -33,6 +33,7 @@
                                 <option value="open" {{ request('status') == 'open' ? 'selected' : '' }}>Open</option>
                                 <option value="assigned" {{ request('status') == 'assigned' ? 'selected' : '' }}>Assigned</option>
                                 <option value="resolved" {{ request('status') == 'resolved' ? 'selected' : '' }}>Resolved</option>
+                                <option value="unsolvable" {{ request('status') == 'unsolvable' ? 'selected' : '' }}>Unsolvable</option>
                             </select>
                         </div>
                         <div class="col-md-4">
@@ -82,11 +83,60 @@
                                     <td data-label="Specialist">{{ $problem->specialist ? $problem->specialist->name : 'Unassigned' }}</td>
                                     <td data-label="Reported Time">{{ $problem->reported_time->format('Y-m-d H:i') }}</td>
                                     <td data-label="Notes">
-                                        {{ $problem->notes }}
-                                        @if($problem->unsolvable_reason)
-                                            <br><strong>Unsolvable Reason:</strong> {{ $problem->unsolvable_reason }}
+                                        @if ($problem->parsedNotes['initial'] || $problem->parsedNotes['resolution'] || $problem->parsedNotes['unassignments'] || $problem->parsedNotes['unsolvable'] || $problem->parsedNotes['edits'])
+                                            <div class="accordion" id="notesAccordion{{ $problem->problem_number }}">
+                                                <div class="accordion-item">
+                                                    <h2 class="accordion-header" id="notesHeading{{ $problem->problem_number }}">
+                                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#notesCollapse{{ $problem->problem_number }}" aria-expanded="false" aria-controls="notesCollapse{{ $problem->problem_number }}">
+                                                            View Notes
+                                                        </button>
+                                                    </h2>
+                                                    <div id="notesCollapse{{ $problem->problem_number }}" class="accordion-collapse collapse" aria-labelledby="notesHeading{{ $problem->problem_number }}" data-bs-parent="#notesAccordion{{ $problem->problem_number }}">
+                                                        <div class="accordion-body">
+                                                            @if ($problem->parsedNotes['initial'])
+                                                                <h6>Initial Notes</h6>
+                                                                <p>{{ $problem->parsedNotes['initial'] }}</p>
+                                                            @endif
+                                                            @if ($problem->parsedNotes['resolution'])
+                                                                <h6>Resolution</h6>
+                                                                <ul>
+                                                                    @foreach ($problem->parsedNotes['resolution'] as $resolution)
+                                                                        <li>{{ $resolution }}</li>
+                                                                    @endforeach
+                                                                </ul>
+                                                            @endif
+                                                            @if ($problem->parsedNotes['unassignments'])
+                                                                <h6>Unassignment Reasons</h6>
+                                                                <ul>
+                                                                    @foreach ($problem->parsedNotes['unassignments'] as $reason)
+                                                                        <li>{{ $reason }}</li>
+                                                                    @endforeach
+                                                                </ul>
+                                                            @endif
+                                                            @if ($problem->parsedNotes['unsolvable'])
+                                                                <h6>Unsolvable Reasons</h6>
+                                                                <ul>
+                                                                    @foreach ($problem->parsedNotes['unsolvable'] as $reason)
+                                                                        <li>{{ $reason }}</li>
+                                                                    @endforeach
+                                                                </ul>
+                                                            @endif
+                                                            @if ($problem->parsedNotes['edits'])
+                                                                <h6>Edit History</h6>
+                                                                <ul>
+                                                                    @foreach ($problem->parsedNotes['edits'] as $edit)
+                                                                        <li>{{ $edit }}</li>
+                                                                    @endforeach
+                                                                </ul>
+                                                            @endif
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        @else
+                                            <span class="text-muted">No notes</span>
                                         @endif
-                                    </td>                                    
+                                    </td>
                                 </tr>
                             @empty
                                 <tr>
