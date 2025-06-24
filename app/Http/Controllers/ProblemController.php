@@ -108,9 +108,17 @@ class ProblemController extends Controller
 
     public function assignSpecialist($problemId)
     {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+    
+        // Restrict specialists from assigning problems
+        if ($user->isSpecialist()) {
+            abort(403, 'Unauthorized');
+        }
+    
         $problem = Problem::findOrFail($problemId);
         $specialist = $this->assignSpecialistToProblem($problem);
-
+    
         if ($specialist) {
             return redirect()->back()->with('success', "Specialist assigned: {$specialist->name}");
         }
@@ -121,7 +129,7 @@ class ProblemController extends Controller
             })
             ->withCount('activeAssignments')
             ->get();
-
+    
         if ($specialists->isEmpty()) {
             return redirect()->back()->with('error', 'No specialist with matching expertise available');
         }
@@ -133,32 +141,35 @@ class ProblemController extends Controller
         $problem = Problem::findOrFail($problemId);
         /** @var \App\Models\User $user */
         $user = Auth::user();
-        if ($user->id !== $problem->specialist_id && !$user->isAdmin()) {
-            abort(403, 'Unauthorized');
+
+        // Allow admins, operators, or assigned specialists to resolve
+        if (!$user->isAdmin() && !$user->isOperator() && $user->id !== $problem->specialist_id) {
+            return redirect()->route('problems.index')->with('error', 'You are not authorized to resolve this problem.');
         }
+
         $request->validate([
             'resolution_notes' => 'required|string',
         ]);
-    
+
         // Update assignment history
         $assignment = ProblemAssignmentHistory::where('problem_id', $problem->problem_number)
             ->where('specialist_id', $problem->specialist_id)
             ->whereNull('unassigned_at')
             ->latest('assigned_at')
             ->first();
-    
+
         if ($assignment) {
             $assignment->unassigned_at = now();
             $assignment->reason = "Problem resolved: {$request->resolution_notes}";
             $assignment->save();
         }
-    
+
         $problem->status = 'resolved';
         $problem->resolved_time = now();
         $problem->notes .= "\nResolution: " . $request->resolution_notes;
         $problem->specialist_id = null; // Clear specialist_id
         $problem->save();
-    
+
         return redirect()->route('problems.index')->with('success', 'Problem resolved successfully');
     }
 
@@ -379,9 +390,9 @@ class ProblemController extends Controller
         /** @var \App\Models\User $user */
         $user = Auth::user();
     
-        // Allow admins, operators, or assigned specialists
-        if (!$user->isAdmin() && !$user->isOperator() && $user->id !== $problem->specialist_id) {
-            abort(403, 'Unauthorized');
+        // Restrict to admins or assigned specialists only
+        if (!$user->isAdmin() && $user->id !== $problem->specialist_id) {
+            return redirect()->route('problems.index')->with('error', 'You are not authorized to mark this problem as unsolvable.');
         }
     
         $request->validate([
@@ -405,7 +416,7 @@ class ProblemController extends Controller
         $problem->unsolvable_reason = $request->unsolvable_reason;
         $problem->notes .= "\nMarked unsolvable by {$user->name}: " . $request->unsolvable_reason;
         $problem->specialist_id = null;
-        $problem->resolved_time = now(); // Set resolved_time
+        $problem->resolved_time = now();
         $problem->save();
     
         return redirect()->route('problems.index')->with('success', 'Problem marked as unsolvable');

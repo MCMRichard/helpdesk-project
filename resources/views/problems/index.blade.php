@@ -121,13 +121,15 @@
                                                     <button type="submit" class="btn btn-primary btn-sm w-100">Assign Specialist</button>
                                                 </form>
                                             @endif
-                                            @if ($problem->specialist_id && (Auth::user()->isAdmin() || Auth::id() === $problem->specialist_id))
+                                            @if (Auth::user()->isAdmin() || Auth::user()->isOperator() || Auth::id() === $problem->specialist_id)
                                                 <!-- Resolve Form -->
                                                 <form action="{{ route('problems.resolve', $problem->problem_number) }}" method="POST">
                                                     @csrf
                                                     <textarea name="resolution_notes" class="form-control mb-2" placeholder="Resolution notes" rows="2" required></textarea>
                                                     <button type="submit" class="btn btn-success btn-sm w-100">Resolve</button>
                                                 </form>
+                                            @endif
+                                            @if ($problem->specialist_id && (Auth::user()->isAdmin() || Auth::id() === $problem->specialist_id))
                                                 <!-- Unassign Form -->
                                                 <form action="{{ route('problems.unassign', $problem->problem_number) }}" method="POST">
                                                     @csrf
@@ -135,7 +137,7 @@
                                                     <button type="submit" class="btn btn-warning btn-sm w-100">Unassign</button>
                                                 </form>
                                             @endif
-                                            @if (Auth::user()->isAdmin() || Auth::user()->isOperator() || Auth::id() === $problem->specialist_id)
+                                            @if (Auth::user()->isAdmin() || Auth::id() === $problem->specialist_id)
                                                 <!-- Mark Unsolvable Form -->
                                                 <form action="{{ route('problems.unsolvable', $problem->problem_number) }}" method="POST">
                                                     @csrf

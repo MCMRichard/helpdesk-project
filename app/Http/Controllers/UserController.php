@@ -18,7 +18,7 @@ class UserController extends Controller
     // Method to show the create user form
     public function create()
     {
-        return view('admin.users.create');
+        return view('admin.create');
     }
 
     public function edit(User $user)

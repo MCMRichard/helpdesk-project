@@ -72,7 +72,7 @@
                         @enderror
                     </div>
                     <button type="submit" class="btn btn-primary">Create User</button>
-                    <a href="{{ route('users.index') }}" class="btn btn-secondary">Cancel</a>
+                    <a href="{{ route('admin.users') }}" class="btn btn-secondary">Cancel</a>
                 </form>
 
                 <script>

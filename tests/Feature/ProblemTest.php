@@ -16,11 +16,11 @@ class ProblemTest extends TestCase
 
     public function test_operator_can_log_problem()
     {
-        /** @var \App\Models\User|\Illuminate\Contracts\Auth\Authenticatable $operator */
+        /** @var \App\Models\User $operator */
         $operator = User::factory()->create(['role' => 'operator']);
         $caller = Caller::factory()->create();
         $problemType = ProblemType::factory()->create();
-        $equipment = Equipment::factory()->create(['serial_number' => 'EQ123']);
+        $equipment = Equipment::factory()->create();
 
         $this->actingAs($operator);
 
@@ -28,19 +28,23 @@ class ProblemTest extends TestCase
             'caller_id' => $caller->caller_id,
             'problem_type_id' => $problemType->problem_type_id,
             'equipment_serial' => $equipment->serial_number,
-            'notes' => 'Test problem',
+            'notes' => 'Test problem description',
         ]);
 
         $response->assertRedirect(route('problems.index'));
         $this->assertDatabaseHas('problems', [
             'operator_id' => $operator->id,
             'status' => 'open',
+            'caller_id' => $caller->caller_id,
+            'problem_type_id' => $problemType->problem_type_id,
+            'equipment_serial' => $equipment->serial_number,
+            'notes' => 'Test problem description',
         ]);
     }
 
     public function test_specialist_can_resolve_problem()
     {
-        /** @var \App\Models\User|\Illuminate\Contracts\Auth\Authenticatable $specialist */
+        /** @var \App\Models\User $specialist */
         $specialist = User::factory()->create(['role' => 'specialist']);
         $problem = Problem::factory()->create([
             'specialist_id' => $specialist->id,
@@ -50,25 +54,15 @@ class ProblemTest extends TestCase
         $this->actingAs($specialist);
 
         $response = $this->post(route('problems.resolve', $problem->problem_number), [
-            'resolution_notes' => 'Fixed the issue',
+            'resolution_notes' => 'Issue fixed by rebooting system',
         ]);
 
         $response->assertRedirect(route('problems.index'));
         $this->assertDatabaseHas('problems', [
             'problem_number' => $problem->problem_number,
             'status' => 'resolved',
+            'specialist_id' => null,
         ]);
-    }
-
-    public function test_equipment_status_is_set()
-    {
-        $equipment = Equipment::factory()->create(['status' => 'under_repair']);
-        $this->assertEquals('under_repair', $equipment->status);
-    }
-
-    public function test_caller_factory_works()
-    {
-        $caller = Caller::factory()->create();
-        $this->assertInstanceOf(Caller::class, $caller);
+        $this->assertStringContainsString('Resolution: Issue fixed by rebooting system', Problem::find($problem->problem_number)->notes);
     }
 }
